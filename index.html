@@ -75,7 +75,7 @@
 <h1>リンクル 朝一アラート（Chrome専用）</h1>
 <p>
   朝一でリンクルをスクショ → OCR結果を貼り付け → 放置でOK<br>
-  予定の<strong>1分前</strong>に通知・音・全画面アラートが出ます
+  予定の<strong>1分前</strong>に通知・やさしい音・全画面アラートが出ます
 </p>
 
 <textarea id="ocrText" placeholder="例：
@@ -89,13 +89,13 @@
 <h2>今日の予定</h2>
 <ul id="scheduleList"></ul>
 
-<!-- 🔊 アラーム音 -->
+<!-- 🔊 やさしい通知音（Google公式） -->
 <audio id="alarmSound" preload="auto">
-  <source src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg" type="audio/ogg">
+  <source src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg" type="audio/ogg">
 </audio>
 
 <script>
-  // 通知許可
+  // 通知許可の確認
   if ("Notification" in window && Notification.permission !== "granted") {
     Notification.requestPermission();
   }
@@ -130,23 +130,23 @@
       if (delay > 0 && Notification.permission === "granted") {
         setTimeout(() => {
 
-          // 🔔 ブラウザ通知（最大限強調）
-          new Notification("🚨 まもなく開始 🚨", {
+          /* 🔔 ブラウザ通知（最大限目立たせる） */
+          new Notification("🌷 まもなく開始 🌷", {
             body:
               "━━━━━━━━━━━━━━\n" +
               line.trim() + "\n" +
               "━━━━━━━━━━━━━━\n" +
-              "※ 1分後に開始"
+              "※ 1分後に開始します"
           });
 
-          // 🔊 アラーム音（5秒）
+          /* 🔊 やさしい音を5秒間鳴らす */
           if (sound) {
             sound.currentTime = 0;
             sound.play().catch(() => {});
             setTimeout(() => sound.pause(), 5000);
           }
 
-          // 🖥 全画面ポップアップ
+          /* 🖥 全画面ポップアップ */
           openFullscreenPopup(line.trim());
 
         }, delay);
@@ -182,8 +182,8 @@
             text-align: center;
           }
           h1 {
-            font-size: 40px;
-            color: #ff5252;
+            font-size: 36px;
+            color: #ffb74d;
             margin-bottom: 20px;
           }
           p {
