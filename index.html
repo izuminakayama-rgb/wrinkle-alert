@@ -3,97 +3,158 @@
 <head>
   <meta charset="UTF-8" />
   <title>リンクル 朝一アラート（Chrome専用）</title>
+
   <style>
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont;
-      padding: 16px;
-      max-width: 720px;
+      padding: 20px;
+      max-width: 800px;
       margin: auto;
+      background-color: #fafafa;
     }
+
+    h1 {
+      font-size: 30px;
+      color: #d32f2f; /* 赤 */
+      margin-bottom: 8px;
+    }
+
+    p {
+      font-size: 15px;
+      margin-top: 0;
+      margin-bottom: 12px;
+    }
+
     textarea {
       width: 100%;
-      height: 160px;
+      height: 180px;
+      font-size: 16px;
+      padding: 10px;
       margin-top: 8px;
+      box-sizing: border-box;
     }
+
     button {
-      margin-top: 8px;
-    }
-    ul {
+      font-size: 20px;
+      padding: 12px 24px;
       margin-top: 12px;
+      background-color: #1976d2; /* 青 */
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #1565c0;
+    }
+
+    h2 {
+      font-size: 24px;
+      margin-top: 28px;
+      border-bottom: 2px solid #ccc;
+      padding-bottom: 4px;
+    }
+
+    ul {
+      padding-left: 0;
+      list-style: none;
+      margin-top: 12px;
+    }
+
+    li {
+      font-size: 22px;
+      font-weight: bold;
+      color: #e65100; /* オレンジ */
+      background: #fff3e0;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-left: 8px solid #ff9800;
+      border-radius: 6px;
     }
   </style>
 </head>
+
 <body>
 
-<h1>リンクル 朝一アラート（Chrome専用）</h1>
-<p>
-  朝一でリンクルをスクショ → OCR結果貼り付け → 放置でOK<br>
-  予定の <b>1分前</b> にPC通知が出ます
-</p>
+  <h1>リンクル 朝一アラート（Chrome専用）</h1>
+  <p>
+    朝一でリンクルをスクショ → OCR結果貼り付け → 放置でOK<br>
+    <b>予定の1分前</b>に、<b>PC通知＋アラーム音</b>が出ます
+  </p>
 
-<input type="file" disabled />
-<p style="font-size: 12px;">※ 現在OCRは手動貼り付け</p>
+  <!-- 将来用（今は使わない） -->
+  <input type="file" disabled />
+  <p style="font-size: 12px;">※ 現在はOCR結果を手動貼り付け</p>
 
-<textarea
-  id="ocrText"
-  placeholder="例：
+  <textarea
+    id="ocrText"
+    placeholder="例：
 15:50 - 16:10 テスト
 17:00 - 18:00 会議">
-</textarea>
+  </textarea>
 
-<br>
-<button onclick="importSchedule()">朝一インポート</button>
+  <br>
+  <button onclick="importSchedule()">朝一インポート</button>
 
-<h2>今日の予定</h2>
-<ul id="scheduleList"></ul>
+  <h2>今日の予定</h2>
+  <ul id="scheduleList"></ul>
 
-<script>
-  if ("Notification" in window && Notification.permission !== "granted") {
-    Notification.requestPermission();
-  }
+  <!-- 🔊 アラーム音 -->
+  https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg
+  </audio>
 
-  function importSchedule() {
-    const textarea = document.getElementById("ocrText");
-    const list = document.getElementById("scheduleList");
-    list.innerHTML = "";
-
-    if (!textarea) {
-      alert("テキスト欄が見つかりません");
-      return;
+  <script>
+    // 通知の許可を確認
+    if ("Notification" in window && Notification.permission !== "granted") {
+      Notification.requestPermission();
     }
 
-    const lines = textarea.value.split("\n");
-    const regex = /(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})/;
-    const today = new Date();
+    function importSchedule() {
+      const textarea = document.getElementById("ocrText");
+      const list = document.getElementById("scheduleList");
+      const sound = document.getElementById("alarmSound");
 
-    lines.forEach(line => {
-      const match = line.match(regex);
-      if (!match) return;
+      list.innerHTML = "";
 
-      const [h, m] = match[1].split(":").map(Number);
-      const startTime = new Date(today);
-      startTime.setHours(h, m, 0, 0);
+      const lines = textarea.value.split("\n");
+      const regex = /(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})/;
+      const today = new Date();
 
-      // ✅ 表示は常に行う
-      const li = document.createElement("li");
-      li.textContent = `⏰ ${line.trim()}`;
-      list.appendChild(li);
+      lines.forEach(line => {
+        const match = line.match(regex);
+        if (!match) return;
 
-      // ✅ 通知は未来のみ
-      const notifyAt = new Date(startTime.getTime() - 60 * 1000);
-      const delay = notifyAt.getTime() - Date.now();
+        const [h, m] = match[1].split(":").map(Number);
+        const startTime = new Date(today);
+        startTime.setHours(h, m, 0, 0);
 
-      if (delay > 0 && Notification.permission === "granted") {
-        setTimeout(() => {
-          new Notification("まもなく予定", {
-            body: line.trim()
-          });
-        }, delay);
-      }
-    });
-  }
-</script>
+        // ✅ 予定は必ず表示
+        const li = document.createElement("li");
+        li.textContent = `⏰ ${line.trim()}`;
+        list.appendChild(li);
+
+        // ✅ 通知（1分前が未来のものだけ）
+        const notifyAt = new Date(startTime.getTime() - 60 * 1000);
+        const delay = notifyAt.getTime() - Date.now();
+
+        if (delay > 0 && Notification.permission === "granted") {
+          setTimeout(() => {
+            // 🔊 アラーム音
+            if (sound) {
+              sound.currentTime = 0;
+              sound.play().catch(() => {});
+            }
+
+            // 🔔 PC通知
+            new Notification("⏰ まもなく予定！", {
+              body: line.trim()
+            });
+          }, delay);
+        }
+      });
+    }
+  </script>
 
 </body>
 </html>
-``
