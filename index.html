@@ -7,154 +7,182 @@
   <style>
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont;
-      padding: 20px;
-      max-width: 800px;
+      padding: 16px;
+      max-width: 720px;
       margin: auto;
-      background-color: #fafafa;
     }
 
     h1 {
-      font-size: 30px;
-      color: #d32f2f; /* 赤 */
-      margin-bottom: 8px;
-    }
-
-    p {
-      font-size: 15px;
-      margin-top: 0;
-      margin-bottom: 12px;
+      font-size: 22px;
+      margin-bottom: 4px;
     }
 
     textarea {
       width: 100%;
-      height: 180px;
-      font-size: 16px;
-      padding: 10px;
+      height: 160px;
       margin-top: 8px;
-      box-sizing: border-box;
+      font-size: 14px;
     }
 
     button {
-      font-size: 20px;
-      padding: 12px 24px;
-      margin-top: 12px;
-      background-color: #1976d2; /* 青 */
-      color: #ffffff;
-      border: none;
-      border-radius: 8px;
+      margin-top: 10px;
+      padding: 6px 16px;
+      font-size: 14px;
       cursor: pointer;
     }
 
-    button:hover {
-      background-color: #1565c0;
-    }
-
     h2 {
-      font-size: 24px;
-      margin-top: 28px;
-      border-bottom: 2px solid #ccc;
-      padding-bottom: 4px;
+      margin-top: 24px;
+      font-size: 18px;
     }
 
+    /* ✅ 今日の予定：シンプル表示（元に戻す） */
     ul {
-      padding-left: 0;
-      list-style: none;
-      margin-top: 12px;
+      margin-top: 8px;
+      padding-left: 18px;
     }
 
     li {
-      font-size: 22px;
-      font-weight: bold;
-      color: #e65100; /* オレンジ */
-      background: #fff3e0;
-      padding: 10px;
-      margin-bottom: 10px;
-      border-left: 8px solid #ff9800;
-      border-radius: 6px;
+      font-size: 14px;
+      margin-bottom: 4px;
     }
   </style>
 </head>
 
 <body>
 
-  <h1>リンクル 朝一アラート（Chrome専用）</h1>
-  <p>
-    朝一でリンクルをスクショ → OCR結果貼り付け → 放置でOK<br>
-    <b>予定の1分前</b>に、<b>PC通知＋アラーム音</b>が出ます
-  </p>
+<h1>リンクル 朝一アラート（Chrome専用）</h1>
+<p style="font-size:13px;">
+  朝一でリンクルをスクショ → OCR結果を貼り付け → 放置でOK<br>
+  予定の<strong>1分前</strong>に通知・音・全画面アラートが出ます
+</p>
 
-  <!-- 将来用（今は使わない） -->
-  <input type="file" disabled />
-  <p style="font-size: 12px;">※ 現在はOCR結果を手動貼り付け</p>
+<textarea id="ocrText" placeholder="例：
+15:40 - 16:50 テスト
+17:00 - 18:00 会議"></textarea>
 
-  <textarea
-    id="ocrText"
-    placeholder="例：
-15:50 - 16:10 テスト
-17:00 - 18:00 会議">
-  </textarea>
+<br>
+<button onclick="importSchedule()">朝一インポート</button>
 
-  <br>
-  <button onclick="importSchedule()">朝一インポート</button>
+<h2>今日の予定</h2>
+<ul id="scheduleList"></ul>
 
-  <h2>今日の予定</h2>
-  <ul id="scheduleList"></ul>
+<!-- 🔊 アラーム音（Google公式） -->
+<audio id="alarmSound" preload="auto">
+  <source src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg" type="audio/ogg">
+</audio>
 
-  <!-- 🔊 アラーム音 -->
-  https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg
-  </audio>
+<script>
+  // 通知許可
+  if ("Notification" in window && Notification.permission !== "granted") {
+    Notification.requestPermission();
+  }
 
-  <script>
-    // 通知の許可を確認
-    if ("Notification" in window && Notification.permission !== "granted") {
-      Notification.requestPermission();
-    }
+  function importSchedule() {
+    const textarea = document.getElementById("ocrText");
+    const list = document.getElementById("scheduleList");
+    const sound = document.getElementById("alarmSound");
 
-    function importSchedule() {
-      const textarea = document.getElementById("ocrText");
-      const list = document.getElementById("scheduleList");
-      const sound = document.getElementById("alarmSound");
+    list.innerHTML = "";
 
-      list.innerHTML = "";
+    const lines = textarea.value.split("\n");
+    const regex = /(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})/;
+    const today = new Date();
 
-      const lines = textarea.value.split("\n");
-      const regex = /(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})/;
-      const today = new Date();
+    lines.forEach(line => {
+      const match = line.match(regex);
+      if (!match) return;
 
-      lines.forEach(line => {
-        const match = line.match(regex);
-        if (!match) return;
+      const [h, m] = match[1].split(":").map(Number);
+      const startTime = new Date(today);
+      startTime.setHours(h, m, 0, 0);
 
-        const [h, m] = match[1].split(":").map(Number);
-        const startTime = new Date(today);
-        startTime.setHours(h, m, 0, 0);
+      // ✅ 今日の予定に必ず表示（シンプル）
+      const li = document.createElement("li");
+      li.textContent = line.trim();
+      list.appendChild(li);
 
-        // ✅ 予定は必ず表示
-        const li = document.createElement("li");
-        li.textContent = `⏰ ${line.trim()}`;
-        list.appendChild(li);
+      // ✅ 通知は未来のみ
+      const notifyAt = new Date(startTime.getTime() - 60 * 1000);
+      const delay = notifyAt.getTime() - Date.now();
 
-        // ✅ 通知（1分前が未来のものだけ）
-        const notifyAt = new Date(startTime.getTime() - 60 * 1000);
-        const delay = notifyAt.getTime() - Date.now();
+      if (delay > 0 && Notification.permission === "granted") {
+        setTimeout(() => {
+          // 🔔 ブラウザ通知（最大限強調）
+          new Notification("🚨🚨 まもなく開始 🚨🚨", {
+            body:
+              "━━━━━━━━━━━━━━\n" +
+              "⏰ " + line.trim() + "\n" +
+              "━━━━━━━━━━━━━━\n" +
+              "※ 1分後に開始"
+          });
 
-        if (delay > 0 && Notification.permission === "granted") {
-          setTimeout(() => {
-            // 🔊 アラーム音
-            if (sound) {
-              sound.currentTime = 0;
-              sound.play().catch(() => {});
-            }
+          // 🔊 連続音（約5秒）
+          if (sound) {
+            sound.currentTime = 0;
+            sound.play().catch(() => {});
+            setTimeout(() => sound.pause(), 5000);
+          }
 
-            // 🔔 PC通知
-            new Notification("⏰ まもなく予定！", {
-              body: line.trim()
-            });
-          }, delay);
-        }
-      });
-    }
-  </script>
+          // 🖥 全画面ポップアップ
+          openFullscreenPopup(line.trim());
+
+        }, delay);
+      }
+    });
+  }
+
+  // ✅ 全画面ポップアップ
+  function openFullscreenPopup(text) {
+    const popup = window.open(
+      "",
+      "_blank",
+      "popup=yes,width=600,height=400"
+    );
+
+    if (!popup) return;
+
+    popup.document.write(`
+      <html>
+      <head>
+        <title>まもなく予定</title>
+        <style>
+          body {
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: #000;
+            color: #fff;
+            font-family: system-ui;
+          }
+          .box {
+            text-align: center;
+          }
+          h1 {
+            color: #ff5252;
+            font-size: 42px;
+            margin-bottom: 20px;
+          }
+          p {
+            font-size: 28px;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="box">
+          <h1>🚨 まもなく開始 🚨</h1>
+          <p>${text}</p>
+        </div>
+        <script>
+          document.documentElement.requestFullscreen?.();
+        <\/script>
+      </body>
+      </html>
+    `);
+  }
+</script>
 
 </body>
 </html>
