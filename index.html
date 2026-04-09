@@ -56,7 +56,7 @@
       padding-bottom: 4px;
     }
 
-    /* ✅ 今日の予定：シンプル黒字 */
+    /* ✅ 今日の予定：シンプル黒字（時計マークなし） */
     ul {
       margin-top: 10px;
       padding-left: 18px;
@@ -89,13 +89,12 @@
 <h2>今日の予定</h2>
 <ul id="scheduleList"></ul>
 
-<!-- 🔊 やさしい通知音（Google公式） -->
+<!-- 🔊 女の子向け・やさしい通知音（Google公式） -->
 <audio id="alarmSound" preload="auto">
-  <source src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg" type="audio/ogg">
+  https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg
 </audio>
 
 <script>
-  // 通知許可の確認
   if ("Notification" in window && Notification.permission !== "granted") {
     Notification.requestPermission();
   }
@@ -119,7 +118,6 @@
       const startTime = new Date(today);
       startTime.setHours(h, m, 0, 0);
 
-      // ✅ 今日の予定：シンプル表示
       const li = document.createElement("li");
       li.textContent = line.trim();
       list.appendChild(li);
@@ -130,7 +128,7 @@
       if (delay > 0 && Notification.permission === "granted") {
         setTimeout(() => {
 
-          /* 🔔 ブラウザ通知（最大限目立たせる） */
+          // 🔔 ブラウザ通知（最大限強調）
           new Notification("🌷 まもなく開始 🌷", {
             body:
               "━━━━━━━━━━━━━━\n" +
@@ -139,14 +137,14 @@
               "※ 1分後に開始します"
           });
 
-          /* 🔊 やさしい音を5秒間鳴らす */
+          // 🔊 やさしい通知音を5秒
           if (sound) {
             sound.currentTime = 0;
             sound.play().catch(() => {});
             setTimeout(() => sound.pause(), 5000);
           }
 
-          /* 🖥 全画面ポップアップ */
+          // 🖥 全画面ポップアップ
           openFullscreenPopup(line.trim());
 
         }, delay);
@@ -160,7 +158,6 @@
       "_blank",
       "popup=yes,width=600,height=400"
     );
-
     if (!popup) return;
 
     popup.document.write(`
@@ -183,7 +180,7 @@
           }
           h1 {
             font-size: 36px;
-            color: #ffb74d;
+            color: #ffb6c1;
             margin-bottom: 20px;
           }
           p {
@@ -207,3 +204,4 @@
 
 </body>
 </html>
+``
