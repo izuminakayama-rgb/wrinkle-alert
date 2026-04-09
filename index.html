@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+    <!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
@@ -45,10 +45,6 @@
       cursor: pointer;
     }
 
-    button:hover {
-      opacity: 0.9;
-    }
-
     h2 {
       margin-top: 28px;
       font-size: 18px;
@@ -75,7 +71,7 @@
 <h1>リンクル 朝一アラート（Chrome専用）</h1>
 <p>
   朝一でリンクルをスクショ → OCR結果を貼り付け → 放置でOK<br>
-  予定の<strong>1分前</strong>に通知・やさしい音・全画面アラートが出ます
+  予定の<strong>1分前</strong>に通知・音・全画面アラートが出ます
 </p>
 
 <textarea id="ocrText" placeholder="例：
@@ -89,9 +85,9 @@
 <h2>今日の予定</h2>
 <ul id="scheduleList"></ul>
 
-<!-- 🔊 女の子向け・やさしい通知音（確実に切り替わる形式） -->
+<!-- 🎺 Bugle Tune（Google公式） -->
 <audio id="alarmSound" preload="auto">
-  <source src="https://actions.google.com/sounds/v1/cartoon/pop.ogg" type="audio/ogg">
+  <source src="https://actions.google.com/sounds/v1/alarms/bugle_tune.ogg" type="audio/ogg">
 </audio>
 
 <script>
@@ -128,25 +124,25 @@
       if (delay > 0 && Notification.permission === "granted") {
         setTimeout(() => {
 
-          // ブラウザ通知
-          new Notification("🌷 まもなく開始 🌷", {
+          // 🔔 ブラウザ通知
+          new Notification("🚨 まもなく開始 🚨", {
             body:
               "━━━━━━━━━━━━━━\n" +
               line.trim() + "\n" +
               "━━━━━━━━━━━━━━\n" +
-              "※ 1分後に開始します"
+              "※ 1分後に開始"
           });
 
-          // 🔊 やさしい音を5秒
+          // 🎺 Bugle Tune を5秒鳴らす
           if (sound) {
             sound.pause();
             sound.currentTime = 0;
-            sound.load(); // ← ここが重要
+            sound.load();   // ← キャッシュ対策
             sound.play().catch(() => {});
             setTimeout(() => sound.pause(), 5000);
           }
 
-          // 全画面ポップアップ
+          // 🖥 全画面ポップアップ
           openFullscreenPopup(line.trim());
 
         }, delay);
@@ -178,7 +174,7 @@
           }
           h1 {
             font-size: 36px;
-            color: #ffb6c1;
+            color: #ff5252;
             margin-bottom: 20px;
           }
           p {
@@ -202,4 +198,3 @@
 
 </body>
 </html>
-
